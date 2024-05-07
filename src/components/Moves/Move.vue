@@ -59,9 +59,12 @@ export default defineComponent({
     const click = async (o: string) => {
       if (props.move.Oracles !== undefined) {
         try {
-          results.value.push(oracle.roll(o));
+          const roll = oracle.roll(o);
+          results.value.push(roll);
+          console.log(roll)
           const campaign = useCampaign();
-          console.log(campaign.data)
+          const {content, title} = campaign.data.journal[0]
+          console.log(title, content)
           const payload = {
             model: 'wizardlm2:7b',
             prompt: 'Why is the sky blue?',
