@@ -30,7 +30,7 @@ export default defineComponent({
       /* placeholder */
     };
     const skip = new Promise<void>((resolve) => (skipIntro = resolve));
-    const skippableSleep = (ms: number) => Promise.race([skip, sleep(ms)]);
+    const skippableSleep =  (ms: number) => Promise.race([skip, sleep(ms)]);
 
     const loaded = ref(false);
     const msg = ref(<string[]>['']);
@@ -44,7 +44,7 @@ export default defineComponent({
     };
 
     const $q = useQuasar();
-    $q.dark.set(true);
+    $q.dark.set(false);
 
     const campaign = useCampaign();
 
@@ -71,7 +71,7 @@ export default defineComponent({
     };
 
     onMounted(async () => {
-      await Promise.all([initialiseData(), renderIntro()]);
+      await initialiseData();
       loaded.value = true;
     });
 
