@@ -37,6 +37,10 @@ import { mdToHtml } from 'src/lib/util';
 
 import * as oracle from 'src/lib/oracles';
 
+interface OllmaBody {
+    response: string;
+}
+
 export default defineComponent({
   name: 'Move',
   props: {
@@ -52,10 +56,30 @@ export default defineComponent({
   setup(props) {
     const results = ref([] as string[]);
 
-    const click = (o: string) => {
+    const click = async (o: string) => {
       if (props.move.Oracles !== undefined) {
         try {
-          results.value.push(oracle.roll(o));
+          const roll = oracle.roll(o);
+          results.value.push(roll);
+          console.log(roll)
+          const campaign = useCampaign();
+          const {content, title} = campaign.data.journal[0]
+          console.log(title, content)
+          const payload = {
+            model: 'wizardlm2:7b',
+            prompt: 'Why is the sky blue?',
+            stream: false
+          }
+          const response = await fetch('http://localhost:11434/api/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+          const body : OllmaBody = await response.json() as OllmaBody;
+          console.log(body.response)
+
         } catch (err) {
           alert('Move data not found');
         }
