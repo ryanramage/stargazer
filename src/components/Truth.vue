@@ -16,7 +16,7 @@
         dense
         borderless
       />
-      <q-btn class="col-shrink" icon="mdi-dice-6" flat dense @click="rollMain" />
+      <q-btn class="col-shrink" icon="mdi-account-star" flat dense @click="rollMain" />
     </div>
 
     <div class="row items-center" v-if="subOpts.length > 0">
@@ -38,6 +38,7 @@ import { useCampaign } from 'src/store/campaign';
 import { icon } from 'src/lib/icons';
 import { starforged } from 'dataforged';
 import * as oracle from 'src/lib/oracles';
+import { generateTruth } from 'src/lib/ai'
 
 export default defineComponent({
   name: 'Truths',
@@ -100,9 +101,22 @@ export default defineComponent({
       }
     );
 
-    const rollMain = () => (optSelect.value = truncate(oracle.truth(truth?.$id as string, -1).Result));
+    const rollMain = async () => {
+      const notePrompt = campaign.data.truths[props.id]
+      const examples = opts().map((i) => i.value);
+      const currentCampain = useCampaign().data
+      const onStreamItem = (val: string) => {
+        campaign.data.truths[props.id] ? campaign.data.truths[props.id] += val : campaign.data.truths[props.id] = val
+      }
+      const smallSummary = await generateTruth(currentCampain, truth?.$id, examples, notePrompt, onStreamItem)
+      console.log(smallSummary)
 
-    const rollSub = () => (subOptSelect.value = oracle.truth(truth?.$id as string, optID.value).Result);
+    }
+
+    const rollSub = () => {
+      console.log('rolling sub')
+      subOptSelect.value = oracle.truth(truth?.$id as string, optID.value).Result
+    }
 
     return {
       campaign,
