@@ -36,10 +36,12 @@ import { useCampaign } from 'src/store/campaign';
 import { mdToHtml } from 'src/lib/util';
 
 import * as oracle from 'src/lib/oracles';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { StringOutputParser } from '@langchain/core/output_parsers';
 
-interface OllmaBody {
-    response: string;
-}
+const llmOptions = { baseUrl: 'http://localhost:11434', model: 'wizardlm2:7b' }
+const model = new ChatOllama(llmOptions)
 
 export default defineComponent({
   name: 'Move',
@@ -61,24 +63,24 @@ export default defineComponent({
         try {
           const roll = oracle.roll(o);
           results.value.push(roll);
-          console.log(roll)
           const campaign = useCampaign();
           const {content, title} = campaign.data.journal[0]
           console.log(title, content)
-          const payload = {
-            model: 'wizardlm2:7b',
-            prompt: 'Why is the sky blue?',
-            stream: false
-          }
-          const response = await fetch('http://localhost:11434/api/generate', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
+          const prompt = ChatPromptTemplate.fromMessages([
+            ['system','"You are a story writer. Give a prompt, you envision a scenario unfolding.'],
+            ['user', '{input}'],
+          ]);
+          const parser = new StringOutputParser();
+          const chain = prompt.pipe(model).pipe(parser);
+          const stream = await chain.stream({
+            input: `${title}, ${content}, ${roll}`
           });
-          const body : OllmaBody = await response.json() as OllmaBody;
-          console.log(body.response)
+          for await (const chunk of stream) {
+            const curr : string = results.value[0]
+            const next = !curr ? '' : curr + chunk
+            console.log(next)
+            results.value[0] = next
+          }
 
         } catch (err) {
           alert('Move data not found');
