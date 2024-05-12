@@ -19,6 +19,8 @@
     <o-input label="Relationships" v-model="data.relationships" @roll="Roll.Rel" />
     <o-input label="Quirks" v-model="data.quirks" @roll="Roll.Quirks" reroll />
     <o-input label="Rumours" v-model="data.rumors" @roll="Roll.Rumours" reroll />
+    <o-input label="Notes" v-model="data.notes" @roll="Roll.Notes" autogrow aigen/>
+    <i-input label="Notes" v-model="data.notes" class="q-mt-md q-mb-md" @roll="Roll.Notes" autogrow />
 
     <div class="row items-center">
       <div class="col-8">
@@ -40,15 +42,17 @@ import { useCampaign } from 'src/store/campaign';
 
 import * as oracle from 'src/lib/oracles';
 import { NewFaction } from 'src/lib/campaign';
+import { generateFactionNotes } from 'src/lib/ai'
 import { v4 as uuid } from 'uuid';
 
 import OInput from './OInput.vue';
+import IInput from '../Widgets/IInput.vue';
 import OBtns from './OBtns.vue';
 import { mdToText } from 'src/lib/util';
 
 export default defineComponent({
   name: 'OFaction',
-  components: { OInput, OBtns },
+  components: { OInput, OBtns, IInput },
   setup() {
     const data = ref(NewFaction());
 
@@ -91,6 +95,17 @@ export default defineComponent({
         const r = oracle.roll('Starforged/Oracles/Factions/Rumors');
         data.value.rumors ? (data.value.rumors += ', ' + r) : (data.value.rumors = r);
       },
+      Notes: async () => {
+        const { type, name, influence, leadership, projects, relationships, quirks, rumors } = data.value;
+        const currentCampain = useCampaign().data
+        const onStreamItem = (val: string) => {
+          data.value.notes ? data.value.notes += val : data.value.notes = val;
+        }
+        const info = {type, name, influence, leadership, projects, relationships, quirks, rumors}
+        await generateFactionNotes(currentCampain, info, onStreamItem)
+
+
+      }
     };
 
     const btns = {
