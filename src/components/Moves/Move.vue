@@ -76,10 +76,13 @@ export default defineComponent({
             input: `${title}, ${content}, ${roll}`
           });
           for await (const chunk of stream) {
-            const curr : string = results.value[0]
-            const next = !curr ? '' : curr + chunk
-            console.log(next)
-            results.value[0] = next
+            const curr : string = results.value[1]
+            if (!curr) {
+              results.value[1] = chunk
+            } else {
+              const next = curr + chunk
+              results.value[1] = next
+            }
           }
 
         } catch (err) {
